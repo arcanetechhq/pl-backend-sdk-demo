@@ -6,7 +6,7 @@ No browser wallet. All SDK calls happen in Node. The dashboard is read-only.
 
 ## What you need
 
-- Docker (recommended) or Node 20 + Postgres 16
+- Docker (recommended) or Node 22 + Postgres 16
 - Live stand values: pool, registry, KYT inspect API (same origin as the payment client `VITE_API_BASE_URL`), `APPLICATION_ID` as `association.audit_id` (decimal Fr, not a Compliance UUID), audit public key, `zkConfigNonce`
 - A BIP-39 `STELLAR_MNEMONIC` (secrets stay in env, not in the database)
 

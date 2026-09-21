@@ -14,6 +14,7 @@ import { SdkStateRow } from "./persistence/sdk-state.entity";
 import { SimulatorStateEntity } from "./persistence/simulator-state.entity";
 import { WalletScalarEntity } from "./persistence/wallet-scalar.entity";
 import { PrivacyClientService } from "./privacy/clients";
+import { ProtocolFeeService } from "./privacy/protocol-fee";
 import { PrivacyOperationsService } from "./privacy/operations";
 import { ProveWorkerPool } from "./privacy/proving";
 import { OperationLogService } from "./operation-log";
@@ -50,6 +51,7 @@ const entities = [
   controllers: [DashboardController],
   providers: [
     PrivacyClientService,
+    ProtocolFeeService,
     ProveWorkerPool,
     PrivacyOperationsService,
     OperationLogService,

@@ -32,11 +32,11 @@ Run the relayer the same way from `relayer-service`. Point `RELAYER_ORIGIN` at `
 
 ## Simulator env
 
-| Variable | Default | Role |
-| --- | --- | --- |
-| `TX_INTERVAL_MINUTES` | `30` | Minutes between private transfers |
-| `TX_AMOUNT_XLM` | `1` | Amount of each private transfer |
-| `DEPOSIT_AMOUNT_XLM` | `10` | One-time deposit from account 0 when private balance is empty |
+| Variable              | Default | Role                                                          |
+| --------------------- | ------- | ------------------------------------------------------------- |
+| `TX_INTERVAL_MINUTES` | `30`    | Minutes between private transfers                             |
+| `TX_AMOUNT_XLM`       | `1`     | Amount of each private transfer                               |
+| `DEPOSIT_AMOUNT_XLM`  | `10`    | One-time deposit from account 0 when private balance is empty |
 
 ## API
 
@@ -45,6 +45,7 @@ Run the relayer the same way from `relayer-service`. Point `RELAYER_ORIGIN` at `
 ## Notes
 
 - Private-sender transfers go to `relayer-service` via `@arcanetech/privacy-sdk-relay`. Deposit uses Direct Submission (`execute()`).
+- Deposit, transfer, and withdraw attach a protocol fee (quoted from `/kyt/fees/quote`, same as the payment client). The instructed transfer amount is what the recipient receives; Required Fee is extra spend from the sender's notes. A public deposit is the gross amount; the private note is deposit minus fee.
 - Incoming notes for other HD accounts are remapped onto the recipient G-address after each transfer (delivery step).
 - SDK domain state is a JSONB snapshot of the official in-memory adapter. Restart keeps notes and simulator counters.
 - If a live step cannot be done through the public SDK, stop and treat it as an SDK gap — do not add workarounds that hide missing APIs.

@@ -41,6 +41,18 @@ describe("simulator gating", () => {
       ),
     ).toBe(true);
     expect(
+      isMissingPrivateRecordsError(
+        new Error(
+          "Instructed amount and Required Fee exceed available note value",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      isMissingPrivateRecordsError(
+        new Error("Required Fee leaves no spendable deposit note"),
+      ),
+    ).toBe(true);
+    expect(
       isMissingPrivateRecordsError(new Error("infrastructure_failed")),
     ).toBe(false);
   });

@@ -1,8 +1,9 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { loadDemoEnv } from "../config/env";
-import { stroopsToXlm } from "../lib/money";
+import { stroopsToXlm, xlmToStroops } from "../lib/money";
 import { AccountsService } from "../accounts/accounts.service";
 import { PrivacyOperationsService } from "../privacy/operations";
+import { ProtocolFeeService, requiredFeeStroops } from "../privacy/protocol-fee";
 import { SimulatorService } from "../simulator/simulator.service";
 import {
   OperationLogService,
@@ -19,6 +20,7 @@ export class DashboardController {
   constructor(
     private readonly accounts: AccountsService,
     private readonly operations: PrivacyOperationsService,
+    private readonly fees: ProtocolFeeService,
     private readonly simulator: SimulatorService,
     private readonly logs: OperationLogService,
   ) {}
@@ -30,6 +32,14 @@ export class DashboardController {
   ) {
     const simulator = await this.simulator.getState();
     const accounts = await this.accounts.list();
+    const txAmountStroops = xlmToStroops(this.env.txAmountXlm);
+    const transferFeeQuote = await this.fees.quoteOrUndefined(
+      "transfer",
+      txAmountStroops,
+    );
+    const protocolFeeXlm = transferFeeQuote
+      ? stroopsToXlm(requiredFeeStroops(transferFeeQuote.requiredFee))
+      : null;
     const pageSize = logPageSize(logLimitRaw);
     const { items, total, page } = await this.logs.page({
       page: parsePositiveInt(logPageRaw, 1),
@@ -56,6 +66,7 @@ export class DashboardController {
       assetId: this.env.assetId,
       intervalMinutes: this.env.txIntervalMinutes,
       txAmountXlm: String(this.env.txAmountXlm),
+      protocolFeeXlm,
       transactionCount: simulator.transactionCount,
       totalVolumeXlm: stroopsToXlm(BigInt(simulator.totalVolumeStroops)),
       accounts: accountViews,

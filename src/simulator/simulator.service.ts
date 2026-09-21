@@ -13,6 +13,11 @@ import { AccountsService } from "../accounts/accounts.service";
 import { PrivacyOperationsService } from "../privacy/operations";
 import { OperationLogService } from "../operation-log";
 import {
+  ProtocolFeeService,
+  canCoverInstructedSpend,
+  requiredFeeStroops,
+} from "../privacy/protocol-fee";
+import {
   assertSimulatorReady,
   canRunSimulator,
   OverlappingLoop,
@@ -40,6 +45,7 @@ export class SimulatorService implements OnModuleDestroy {
     private readonly state: Repository<SimulatorStateEntity>,
     private readonly accounts: AccountsService,
     private readonly operations: PrivacyOperationsService,
+    private readonly fees: ProtocolFeeService,
     private readonly logs: OperationLogService,
   ) {}
 
@@ -155,6 +161,20 @@ export class SimulatorService implements OnModuleDestroy {
     const min = xlmToStroops(row.minAmountXlm);
     const max = xlmToStroops(row.maxAmountXlm);
     const amount = randomAmount(min, max);
+    let requiredFee = 0n;
+    try {
+      const quote = await this.fees.quote("transfer", amount);
+      requiredFee = requiredFeeStroops(quote.requiredFee);
+    } catch (error: unknown) {
+      if (this.inFlight.size === 0) {
+        await this.logs.append({
+          kind: "error",
+          message: "Protocol fee quote failed",
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+      return;
+    }
     const funded: HdAccountEntity[] = [];
     for (const account of registered) {
       if (this.busy.has(account.publicKey) || !account.privateAddress) {
@@ -164,7 +184,13 @@ export class SimulatorService implements OnModuleDestroy {
         account.publicKey,
         account.privateAddress,
       );
-      if (balance >= amount) {
+      if (
+        canCoverInstructedSpend({
+          spendableStroops: balance,
+          instructedStroops: amount,
+          requiredFeeStroops: requiredFee,
+        })
+      ) {
         funded.push(account);
       }
     }

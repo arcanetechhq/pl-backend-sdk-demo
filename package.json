@@ -14,10 +14,10 @@
     "test": "jest --config jest.config.cjs"
   },
   "dependencies": {
-    "@arcanetech/privacy-sdk-core": "0.3.0",
-    "@arcanetech/privacy-sdk-relay": "^0.2.2",
-    "@arcanetech/privacy-sdk-state-memory": "0.2.2",
-    "@arcanetech/privacy-sdk-stellar": "0.5.2",
+    "@arcanetech/privacy-sdk-core": "0.3.1",
+    "@arcanetech/privacy-sdk-relay": "^0.2.3",
+    "@arcanetech/privacy-sdk-state-memory": "0.2.3",
+    "@arcanetech/privacy-sdk-stellar": "0.5.4",
     "@arcanetech/stellar-privacy-pool-zk-sdk": "^0.10.1-rc.2",
     "@nestjs/common": "^11.1.3",
     "@nestjs/config": "^4.0.2",

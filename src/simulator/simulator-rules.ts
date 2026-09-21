@@ -19,13 +19,24 @@ export function shouldDepositIfEmpty(balanceStroops: bigint): boolean {
 }
 
 export function isMissingPrivateRecordsError(error: unknown): boolean {
-  const message =
-    error instanceof Error
-      ? error.message
-      : typeof error === "string"
-        ? error
-        : "";
-  return message.includes("enough private records");
+  const message = errorMessage(error);
+  return (
+    message.includes("enough private records") ||
+    message.includes(
+      "Instructed amount and Required Fee exceed available note value",
+    ) ||
+    message.includes("Required Fee leaves no spendable deposit note")
+  );
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "";
 }
 
 export class IntervalLoop {

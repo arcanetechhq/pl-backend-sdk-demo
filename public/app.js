@@ -73,6 +73,8 @@ function render(state) {
   );
   document.getElementById("tx-count").textContent = state.transactionCount;
   document.getElementById("volume").textContent = state.totalVolumeXlm;
+  document.getElementById("protocol-fee").textContent =
+    state.protocolFeeXlm ?? "—";
   accountsBody.innerHTML = "";
   for (const account of state.accounts) {
     const row = document.createElement("tr");

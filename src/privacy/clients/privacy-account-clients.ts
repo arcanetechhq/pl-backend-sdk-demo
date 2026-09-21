@@ -16,7 +16,9 @@ import {
   accountSnapshotId,
   createPostgresStateAdapter,
   hydrateMemoryAdapter,
-  loadAccountStateTree,
+  loadHydratedStateTree,
+  promoteSharedPoolSnapshot,
+  richerPoolBranch,
 } from "../state";
 import { wrapTransactEngineToProveAtPrepare } from "./wrap-transact-engine";
 import { kytInspectAuthorization } from "../kyt";
@@ -62,6 +64,7 @@ export async function bootstrapAccountClients(input: {
   const sdkWasm = new ArrayBuffer(wasmFile.byteLength);
   new Uint8Array(sdkWasm).set(wasmFile);
   const assets = { sdkWasm };
+  await promoteSharedPoolSnapshot(input.sdkState);
   const sessions = new Map<string, AccountClientSession>();
   for (const publicKey of keypairs.keys()) {
     const session = await createAccountSession({
@@ -98,9 +101,9 @@ export async function bootstrapAccountClients(input: {
         if (!session) {
           continue;
         }
-        session.memory.resetState(
-          await loadAccountStateTree(input.sdkState, publicKey),
-        );
+        const loaded = await loadHydratedStateTree(input.sdkState, publicKey);
+        const pool = richerPoolBranch(session.memory.getState(), loaded);
+        session.memory.resetState(pool ? { ...loaded, ...pool } : loaded);
       }
     },
   };

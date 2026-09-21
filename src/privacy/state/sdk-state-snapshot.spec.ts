@@ -1,7 +1,12 @@
 import {
   accountSnapshotId,
+  mergePoolBranch,
   partitionSdkStateTree,
+  poolCommitmentCount,
   privateBalanceStroopsFromRecords,
+  pruneSpentPrivateRecords,
+  richerPoolBranch,
+  withoutPoolBranch,
 } from "./sdk-state-snapshot";
 
 describe("sdk state snapshot partition", () => {
@@ -52,6 +57,44 @@ describe("sdk state snapshot partition", () => {
       privateAddresses: { GA: "stpl1a" },
       registeredAddresses: { GA: true },
     });
+  });
+
+  it("strips the pool branch so account snapshots stay small", () => {
+    const tree = {
+      privateRecords: [{ id: "1", owner: "GA" }],
+      pools: {
+        byContract: {
+          CPOOL: { commitments: ["a", "b"], commitmentCount: 2 },
+        },
+      },
+    };
+    expect(withoutPoolBranch(tree)).toEqual({
+      privateRecords: [{ id: "1", owner: "GA" }],
+    });
+    expect(poolCommitmentCount(tree)).toBe(2);
+    expect(mergePoolBranch(withoutPoolBranch(tree), tree).pools).toEqual(
+      tree.pools,
+    );
+    expect(
+      poolCommitmentCount(
+        richerPoolBranch(tree, {
+          pools: {
+            byContract: { CPOOL: { commitments: ["a"], commitmentCount: 1 } },
+          },
+        }),
+      ),
+    ).toBe(2);
+  });
+
+  it("drops spent private records from persisted account trees", () => {
+    expect(
+      pruneSpentPrivateRecords({
+        privateRecords: [
+          { id: "live", owner: "GA", consumed: false },
+          { id: "spent", owner: "GA", consumed: true, status: "spent" },
+        ],
+      }).privateRecords,
+    ).toEqual([{ id: "live", owner: "GA", consumed: false }]);
   });
 
   it("sums unspent private balance for an owner", () => {

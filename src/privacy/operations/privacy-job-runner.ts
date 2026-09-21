@@ -323,9 +323,9 @@ export class PrivacyJobRunner {
     if (consumed.length === 0) {
       return;
     }
-    await this.clients
-      .getClient(senderPublicKey)
-      .markPrivateRecordsStatus(consumed, "spent");
+    const client = this.clients.getClient(senderPublicKey);
+    await client.markPrivateRecordsStatus(consumed, "spent");
+    await client.pruneConsumedPrivateRecords();
   }
 
   private async deliverOutputs(

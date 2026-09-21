@@ -7,6 +7,7 @@ import { SdkStateRow } from "../../persistence/sdk-state.entity";
 import {
   loadAccountStateTree,
   privateBalanceStroopsFromRecords,
+  promoteSharedPoolSnapshot,
 } from "../state";
 import { importEsm } from "../../lib/esm";
 import { assertKytInspectLooksLikeJson } from "../kyt";
@@ -72,6 +73,7 @@ export class PrivacyClientService implements OnModuleInit {
     this.layout = transactionNoteLayoutFromSdk(
       zk.layoutForKnownNonce(this.env.zkConfigNonce),
     );
+    await promoteSharedPoolSnapshot(this.sdkState);
     this.ready = true;
     this.logger.log(
       `Privacy read path ready (layout ${this.layout.nIns}x${this.layout.nOuts}, nonce ${this.env.zkConfigNonce.toString()})`,

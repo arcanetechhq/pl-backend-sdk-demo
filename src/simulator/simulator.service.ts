@@ -1,14 +1,14 @@
-import {
-  BadRequestException,
-  Injectable,
-  OnModuleDestroy,
-} from "@nestjs/common";
+import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { loadDemoEnv, intervalMsFromMinutes } from "../config/env";
 import { AsyncMutex } from "../lib/async";
 import { xlmToStroops } from "../lib/money";
 import { HdAccountEntity } from "../persistence/hd-account.entity";
-import { SimulatorStateEntity } from "../persistence/simulator-state.entity";
+import {
+  SimulatorStateEntity,
+  type SimulatorStatus,
+} from "../persistence/simulator-state.entity";
 import { AccountsService } from "../accounts/accounts.service";
 import { PrivacyOperationsService } from "../privacy/operations";
 import { OperationLogService } from "../operation-log";
@@ -17,6 +17,7 @@ import {
   canRunSimulator,
   OverlappingLoop,
   isMissingPrivateRecordsError,
+  SIMULATOR_NOT_READY_MESSAGE,
 } from "./simulator-rules";
 import {
   maxSimulatorConcurrency,
@@ -25,15 +26,9 @@ import {
 
 const SIMULATOR_ID = "default";
 
-export type SimulatorStartInput = {
-  amountXlm?: number;
-  minAmountXlm?: number;
-  maxAmountXlm?: number;
-  transactionsPerMinute?: number;
-};
-
 @Injectable()
 export class SimulatorService implements OnModuleDestroy {
+  private readonly env = loadDemoEnv();
   private readonly loop = new OverlappingLoop();
   private readonly busy = new Set<string>();
   private readonly inFlight = new Set<Promise<void>>();
@@ -60,48 +55,43 @@ export class SimulatorService implements OnModuleDestroy {
         status: "stopped",
         transactionCount: "0",
         totalVolumeStroops: "0",
-        transactionsPerMinute: 2,
-        minAmountXlm: "1",
-        maxAmountXlm: "1",
+        intervalMinutes: this.env.txIntervalMinutes,
+        minAmountXlm: String(this.env.txAmountXlm),
+        maxAmountXlm: String(this.env.txAmountXlm),
       });
       await this.state.save(row);
     }
     return row;
   }
 
-  async start(input: SimulatorStartInput): Promise<SimulatorStateEntity> {
+  async markStatus(status: SimulatorStatus): Promise<void> {
+    const row = await this.getState();
+    row.status = status;
+    await this.state.save(row);
+  }
+
+  async start(): Promise<SimulatorStateEntity> {
     const accounts = await this.accounts.list();
     const registered = accounts.filter((account) => account.registered);
     const first = registered[0];
     if (!first) {
-      throw new BadRequestException(
-        "Run setup and deposit before starting the simulator.",
-      );
+      throw new Error(SIMULATOR_NOT_READY_MESSAGE);
     }
     const deposited = await this.operations.privateBalanceStroops(
       first.publicKey,
     );
-    try {
-      assertSimulatorReady(registered.length, deposited);
-    } catch (error) {
-      throw new BadRequestException(
-        error instanceof Error
-          ? error.message
-          : "Run setup and deposit before starting the simulator.",
-      );
-    }
-    const minAmountXlm = input.minAmountXlm ?? input.amountXlm ?? 1;
-    const maxAmountXlm = input.maxAmountXlm ?? input.amountXlm ?? minAmountXlm;
-    const tpm = input.transactionsPerMinute ?? 2;
+    assertSimulatorReady(registered.length, deposited);
+    const amountXlm = this.env.txAmountXlm;
+    const intervalMinutes = this.env.txIntervalMinutes;
     const row = await this.getState();
     row.status = "running";
-    row.transactionsPerMinute = tpm;
-    row.minAmountXlm = String(minAmountXlm);
-    row.maxAmountXlm = String(maxAmountXlm);
+    row.intervalMinutes = intervalMinutes;
+    row.minAmountXlm = String(amountXlm);
+    row.maxAmountXlm = String(amountXlm);
     await this.state.save(row);
     this.stopTimer();
     this.running = true;
-    const intervalMs = Math.max(1000, Math.round(60_000 / tpm));
+    const intervalMs = intervalMsFromMinutes(intervalMinutes);
     this.loop.start(intervalMs, async () => {
       if (!this.running) {
         return;
@@ -118,7 +108,7 @@ export class SimulatorService implements OnModuleDestroy {
     });
     await this.logs.append({
       kind: "simulator",
-      message: `Started at ${tpm} tx/min`,
+      message: `Started every ${intervalMinutes} min`,
     });
     return row;
   }

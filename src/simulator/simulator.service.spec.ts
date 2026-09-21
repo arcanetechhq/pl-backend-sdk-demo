@@ -4,6 +4,8 @@ import {
   IntervalLoop,
   OverlappingLoop,
   isMissingPrivateRecordsError,
+  shouldDepositIfEmpty,
+  SIMULATOR_NOT_READY_MESSAGE,
 } from "./simulator-rules";
 
 describe("simulator gating", () => {
@@ -15,14 +17,19 @@ describe("simulator gating", () => {
     );
   });
 
-  it("refuses start until setup and deposit", () => {
+  it("refuses start until accounts are registered and funded in the pool", () => {
     expect(() => assertSimulatorReady(2, 0n)).toThrow(
-      "Run setup and deposit before starting the simulator.",
+      SIMULATOR_NOT_READY_MESSAGE,
     );
     expect(() => assertSimulatorReady(1, 10n)).toThrow(
-      "Run setup and deposit before starting the simulator.",
+      SIMULATOR_NOT_READY_MESSAGE,
     );
     expect(() => assertSimulatorReady(2, 1n)).not.toThrow();
+  });
+
+  it("deposits only when private balance is empty", () => {
+    expect(shouldDepositIfEmpty(0n)).toBe(true);
+    expect(shouldDepositIfEmpty(1n)).toBe(false);
   });
 
   it("treats missing private records as a skippable simulator miss", () => {

@@ -31,6 +31,18 @@ export function defaultProveWorkers(accountCount: number): number {
   return Math.min(2, Math.max(1, Math.floor(accountCount / 2)));
 }
 
+export function parsePositiveNumber(name: string, raw: string): number {
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error(`${name} must be a positive number`);
+  }
+  return value;
+}
+
+export function intervalMsFromMinutes(minutes: number): number {
+  return Math.max(1000, Math.round(minutes * 60_000));
+}
+
 export type DemoEnv = {
   port: number;
   databaseUrl: string;
@@ -56,6 +68,9 @@ export type DemoEnv = {
   assetName: string;
   assetDecimals: number;
   databaseCA: string | undefined;
+  txIntervalMinutes: number;
+  txAmountXlm: number;
+  depositAmountXlm: number;
 };
 
 export function loadDemoEnv(): DemoEnv {
@@ -107,5 +122,17 @@ export function loadDemoEnv(): DemoEnv {
     assetName: optionalEnv("ASSET_NAME", "Stellar"),
     assetDecimals: Number.parseInt(optionalEnv("ASSET_DECIMALS", "7"), 10),
     databaseCA: optionalNonEmptyEnv("DATABASE_CA"),
+    txIntervalMinutes: parsePositiveNumber(
+      "TX_INTERVAL_MINUTES",
+      optionalEnv("TX_INTERVAL_MINUTES", "30"),
+    ),
+    txAmountXlm: parsePositiveNumber(
+      "TX_AMOUNT_XLM",
+      optionalEnv("TX_AMOUNT_XLM", "1"),
+    ),
+    depositAmountXlm: parsePositiveNumber(
+      "DEPOSIT_AMOUNT_XLM",
+      optionalEnv("DEPOSIT_AMOUNT_XLM", "10"),
+    ),
   };
 }

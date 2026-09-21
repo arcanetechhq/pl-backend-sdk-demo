@@ -1,8 +1,8 @@
 # Stellar Privacy SDK backend demo
 
-Reference NestJS app that runs `@arcanetech/privacy-sdk-stellar/node` on the server. It derives HD testnet accounts, funds them with Friendbot, deposits native XLM into the privacy pool, then sends private transfers through a relayer-service.
+Reference NestJS app that runs `@arcanetech/privacy-sdk-stellar/node` on the server. It derives HD testnet accounts, funds them with Friendbot, deposits native XLM into the privacy pool if the private balance is empty, then sends private transfers through a relayer-service on a timer.
 
-No browser wallet. All SDK calls happen in Node.
+No browser wallet. All SDK calls happen in Node. The dashboard is read-only.
 
 ## What you need
 
@@ -12,11 +12,12 @@ No browser wallet. All SDK calls happen in Node.
 
 Tutorial fixture contract IDs from the public docs will not confirm on testnet. Use the same stand as your payment UI.
 
-1. Click **Setup accounts** (derives HD keys, Friendbot, registry)
-2. **Deposit** from account 0
-3. **Start** the simulator and watch private transfers, balances, and the log
-4. **Stop**
-5. **Withdraw**
+On `npm run start:dev` the process:
+
+1. Sets up HD accounts (Friendbot + registry) if needed
+2. Deposits `DEPOSIT_AMOUNT_XLM` from account 0 when that account has no unspent private notes
+3. Sends private transfers every `TX_INTERVAL_MINUTES` (default 30), each for `TX_AMOUNT_XLM`
+4. Serves a live viewer for status, balances, volume, and the operation log
 
 ## Local Node
 
@@ -29,14 +30,17 @@ npm run start:dev
 
 Run the relayer the same way from `relayer-service`. Point `RELAYER_ORIGIN` at `http://localhost:3010/api`.
 
+## Simulator env
+
+| Variable | Default | Role |
+| --- | --- | --- |
+| `TX_INTERVAL_MINUTES` | `30` | Minutes between private transfers |
+| `TX_AMOUNT_XLM` | `1` | Amount of each private transfer |
+| `DEPOSIT_AMOUNT_XLM` | `10` | One-time deposit from account 0 when private balance is empty |
+
 ## API
 
-- `GET /api/state`
-- `POST /api/setup`
-- `POST /api/deposit` `{ "amountXlm": 10 }`
-- `POST /api/simulator/start` `{ "amountXlm": 1, "transactionsPerMinute": 2 }`
-- `POST /api/simulator/stop`
-- `POST /api/withdraw` `{ "accountIndex": 0, "amountXlm": 1 }`
+- `GET /api/state` — dashboard snapshot (status, interval, accounts, paginated log)
 
 ## Notes
 

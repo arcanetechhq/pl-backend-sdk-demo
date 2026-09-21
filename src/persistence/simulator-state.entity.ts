@@ -1,12 +1,14 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm';
 
+export type SimulatorStatus = 'starting' | 'running' | 'stopped' | 'error';
+
 @Entity({ name: 'simulator_state' })
 export class SimulatorStateEntity {
   @PrimaryColumn('text')
   id!: string;
 
   @Column('text', { default: 'stopped' })
-  status!: 'running' | 'stopped';
+  status!: SimulatorStatus;
 
   @Column({ type: 'text', default: '0' })
   transactionCount!: string;
@@ -14,8 +16,8 @@ export class SimulatorStateEntity {
   @Column({ type: 'text', default: '0' })
   totalVolumeStroops!: string;
 
-  @Column({ type: 'int', default: 2 })
-  transactionsPerMinute!: number;
+  @Column({ type: 'float', default: 30 })
+  intervalMinutes!: number;
 
   @Column({ type: 'text', default: '1' })
   minAmountXlm!: string;

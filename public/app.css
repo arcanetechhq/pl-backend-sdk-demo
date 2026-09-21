@@ -18,7 +18,7 @@ main {
 }
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   margin: 20px 0;
 }
@@ -32,27 +32,6 @@ main {
   color: #888;
   font-size: 12px;
 }
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-.panels {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.panel {
-  background: #1c1c1c;
-  border: 1px solid #333;
-  padding: 12px 16px;
-}
-.panel h2 {
-  margin: 0 0 10px;
-  font-size: 15px;
-}
 .log-pager {
   display: flex;
   gap: 10px;
@@ -61,15 +40,12 @@ main {
   font-size: 13px;
   color: #bbb;
 }
-button,
-input {
+button {
   font: inherit;
   padding: 6px 10px;
   background: #222;
   color: inherit;
   border: 1px solid #444;
-}
-button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -80,23 +56,6 @@ button:hover:not(:disabled) {
 button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-}
-.btn-spinner {
-  display: none;
-  width: 12px;
-  height: 12px;
-  border: 2px solid #555;
-  border-top-color: #eee;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-button.is-busy .btn-spinner {
-  display: inline-block;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 table {
   width: 100%;

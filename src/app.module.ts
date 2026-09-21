@@ -18,6 +18,7 @@ import { PrivacyOperationsService } from "./privacy/operations";
 import { ProveWorkerPool } from "./privacy/proving";
 import { OperationLogService } from "./operation-log";
 import { SimulatorService } from "./simulator/simulator.service";
+import { SimulatorBootstrapService } from "./simulator/simulator-bootstrap.service";
 
 const env = loadDemoEnv();
 
@@ -54,6 +55,7 @@ const entities = [
     OperationLogService,
     AccountsService,
     SimulatorService,
+    SimulatorBootstrapService,
   ],
 })
 export class AppModule {}

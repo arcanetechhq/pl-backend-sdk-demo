@@ -2,13 +2,20 @@ export function canRunSimulator(accounts: { registered: boolean }[]): boolean {
   return accounts.filter((account) => account.registered).length >= 2;
 }
 
+export const SIMULATOR_NOT_READY_MESSAGE =
+  "Need at least two registered accounts with a private deposit.";
+
 export function assertSimulatorReady(
   registeredCount: number,
   depositedStroops: bigint,
 ): void {
   if (registeredCount < 2 || depositedStroops <= 0n) {
-    throw new Error("Run setup and deposit before starting the simulator.");
+    throw new Error(SIMULATOR_NOT_READY_MESSAGE);
   }
+}
+
+export function shouldDepositIfEmpty(balanceStroops: bigint): boolean {
+  return balanceStroops <= 0n;
 }
 
 export function isMissingPrivateRecordsError(error: unknown): boolean {

@@ -10,61 +10,16 @@
     <main>
       <h1>Stellar Privacy SDK demo</h1>
       <p class="lede">
-        Server-side reference: HD accounts, Friendbot, deposit, private
-        transfers, withdraw. All SDK calls run in Node.
+        Server-side reference: on boot the process funds HD accounts, deposits
+        if the private balance is empty, then sends private transfers on a
+        timer. This page is a live viewer.
       </p>
       <section class="stats">
         <div><span>Status</span><strong id="status">—</strong></div>
+        <div><span>Interval</span><strong id="interval">—</strong></div>
         <div><span>Transactions</span><strong id="tx-count">0</strong></div>
         <div><span>Volume (XLM)</span><strong id="volume">0</strong></div>
       </section>
-      <div class="panels">
-        <section class="panel">
-          <h2>Setup</h2>
-          <div class="controls">
-            <button type="button" id="setup">
-              <span class="btn-label">Setup accounts</span>
-              <span class="btn-spinner" aria-hidden="true"></span>
-            </button>
-          </div>
-        </section>
-        <section class="panel">
-          <h2>Deposit</h2>
-          <div class="controls">
-            <label>Deposit XLM <input id="deposit-amount" type="number" step="0.1" value="10" /></label>
-            <button type="button" id="deposit">
-              <span class="btn-label">Deposit (account 0)</span>
-              <span class="btn-spinner" aria-hidden="true"></span>
-            </button>
-          </div>
-        </section>
-        <section class="panel">
-          <h2>Simulator</h2>
-          <div class="controls">
-            <label>XLM / tx <input id="tx-amount" type="number" step="0.1" value="1" /></label>
-            <label>Tx / min <input id="tpm" type="number" min="1" value="2" /></label>
-            <button type="button" id="start">
-              <span class="btn-label">Start</span>
-              <span class="btn-spinner" aria-hidden="true"></span>
-            </button>
-            <button type="button" id="stop" disabled>
-              <span class="btn-label">Stop</span>
-              <span class="btn-spinner" aria-hidden="true"></span>
-            </button>
-          </div>
-        </section>
-        <section class="panel">
-          <h2>Withdraw</h2>
-          <div class="controls">
-            <label>Withdraw index <input id="withdraw-index" type="number" min="0" value="0" /></label>
-            <label>Withdraw XLM <input id="withdraw-amount" type="number" step="0.1" value="1" /></label>
-            <button type="button" id="withdraw">
-              <span class="btn-label">Withdraw</span>
-              <span class="btn-spinner" aria-hidden="true"></span>
-            </button>
-          </div>
-        </section>
-      </div>
       <p id="flash" class="flash" hidden></p>
       <h2>Accounts</h2>
       <table>

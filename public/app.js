@@ -4,19 +4,12 @@ const logsEl = document.getElementById("logs");
 const logsPageEl = document.getElementById("logs-page");
 const logsPrev = document.getElementById("logs-prev");
 const logsNext = document.getElementById("logs-next");
-const startBtn = document.getElementById("start");
-const stopBtn = document.getElementById("stop");
 const LOG_PAGE_SIZE = 20;
-const busyButtons = new Set();
 let logPage = 1;
 let logRefreshSeq = 0;
-let lastStatus = "stopped";
 
-async function api(path, options) {
-  const response = await fetch(path, {
-    headers: { "content-type": "application/json" },
-    ...options,
-  });
+async function api(path) {
+  const response = await fetch(path);
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(body.message || body.error || response.statusText);
@@ -27,45 +20,6 @@ async function api(path, options) {
 function showError(error) {
   flash.hidden = false;
   flash.textContent = error instanceof Error ? error.message : String(error);
-}
-
-function clearError() {
-  flash.hidden = true;
-  flash.textContent = "";
-}
-
-function setButtonBusy(button, isBusy) {
-  if (isBusy) {
-    busyButtons.add(button);
-    button.disabled = true;
-    button.classList.add("is-busy");
-    return;
-  }
-  busyButtons.delete(button);
-  button.classList.remove("is-busy");
-}
-
-function syncSimulatorButtons() {
-  const running = lastStatus === "running";
-  if (!busyButtons.has(startBtn)) {
-    startBtn.disabled = running;
-  }
-  if (!busyButtons.has(stopBtn)) {
-    stopBtn.disabled = !running;
-  }
-}
-
-async function withBusy(button, action) {
-  clearError();
-  setButtonBusy(button, true);
-  try {
-    await action();
-  } catch (error) {
-    showError(error);
-  } finally {
-    setButtonBusy(button, false);
-    syncSimulatorButtons();
-  }
 }
 
 function formatAccountIndex(index) {
@@ -92,6 +46,13 @@ function formatLogLine(entry) {
   return `${entry.at} [${entry.kind}]${partiesPart} ${entry.message}${tx}${error}`;
 }
 
+function formatInterval(minutes) {
+  if (minutes === null || minutes === undefined || minutes === "") {
+    return "—";
+  }
+  return `Every ${minutes} min`;
+}
+
 function renderLogs(logs) {
   logPage = logs.page;
   logsPageEl.textContent = `Page ${logs.page} of ${logs.pageCount} (${logs.total})`;
@@ -106,8 +67,10 @@ function renderLogs(logs) {
 }
 
 function render(state) {
-  lastStatus = state.status;
   document.getElementById("status").textContent = state.status;
+  document.getElementById("interval").textContent = formatInterval(
+    state.intervalMinutes,
+  );
   document.getElementById("tx-count").textContent = state.transactionCount;
   document.getElementById("volume").textContent = state.totalVolumeXlm;
   accountsBody.innerHTML = "";
@@ -124,7 +87,6 @@ function render(state) {
     accountsBody.appendChild(row);
   }
   renderLogs(state.logs);
-  syncSimulatorButtons();
 }
 
 async function refresh() {
@@ -138,52 +100,6 @@ async function refresh() {
   }
   render(state);
 }
-
-document.getElementById("setup").onclick = () =>
-  withBusy(document.getElementById("setup"), async () => {
-    await api("/api/setup", { method: "POST", body: "{}" });
-    await refresh();
-  });
-
-document.getElementById("deposit").onclick = () =>
-  withBusy(document.getElementById("deposit"), async () => {
-    const amountXlm = Number(document.getElementById("deposit-amount").value);
-    await api("/api/deposit", {
-      method: "POST",
-      body: JSON.stringify({ amountXlm }),
-    });
-    await refresh();
-  });
-
-startBtn.onclick = () =>
-  withBusy(startBtn, async () => {
-    const amountXlm = Number(document.getElementById("tx-amount").value);
-    const transactionsPerMinute = Number(document.getElementById("tpm").value);
-    await api("/api/simulator/start", {
-      method: "POST",
-      body: JSON.stringify({ amountXlm, transactionsPerMinute }),
-    });
-    await refresh();
-  });
-
-stopBtn.onclick = () =>
-  withBusy(stopBtn, async () => {
-    await api("/api/simulator/stop", { method: "POST", body: "{}" });
-    await refresh();
-  });
-
-document.getElementById("withdraw").onclick = () =>
-  withBusy(document.getElementById("withdraw"), async () => {
-    const accountIndex = Number(
-      document.getElementById("withdraw-index").value,
-    );
-    const amountXlm = Number(document.getElementById("withdraw-amount").value);
-    await api("/api/withdraw", {
-      method: "POST",
-      body: JSON.stringify({ accountIndex, amountXlm }),
-    });
-    await refresh();
-  });
 
 logsPrev.onclick = async () => {
   if (logPage <= 1) {

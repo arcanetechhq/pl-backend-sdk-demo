@@ -1,12 +1,9 @@
-import { Body, Controller, Get, Post, Query } from "@nestjs/common";
+import { Controller, Get, Query } from "@nestjs/common";
 import { loadDemoEnv } from "../config/env";
-import { stroopsToXlm, xlmToStroops } from "../lib/money";
+import { stroopsToXlm } from "../lib/money";
 import { AccountsService } from "../accounts/accounts.service";
 import { PrivacyOperationsService } from "../privacy/operations";
-import {
-  SimulatorService,
-  type SimulatorStartInput,
-} from "../simulator/simulator.service";
+import { SimulatorService } from "../simulator/simulator.service";
 import {
   OperationLogService,
   logPageCount,
@@ -57,6 +54,8 @@ export class DashboardController {
     return {
       status: simulator.status,
       assetId: this.env.assetId,
+      intervalMinutes: this.env.txIntervalMinutes,
+      txAmountXlm: String(this.env.txAmountXlm),
       transactionCount: simulator.transactionCount,
       totalVolumeXlm: stroopsToXlm(BigInt(simulator.totalVolumeStroops)),
       accounts: accountViews,
@@ -78,39 +77,5 @@ export class DashboardController {
         })),
       },
     };
-  }
-
-  @Post("setup")
-  async setup() {
-    const accounts = await this.accounts.setup();
-    return { ok: true, count: accounts.length };
-  }
-
-  @Post("deposit")
-  async deposit(@Body() body: { amountXlm?: number }) {
-    const account = await this.accounts.getByIndex(0);
-    const amount = xlmToStroops(body.amountXlm ?? 10);
-    const txId = await this.operations.deposit(account, amount);
-    return { ok: true, txId };
-  }
-
-  @Post("simulator/start")
-  async start(@Body() body: SimulatorStartInput) {
-    const row = await this.simulator.start(body);
-    return { ok: true, status: row.status };
-  }
-
-  @Post("simulator/stop")
-  async stop() {
-    const row = await this.simulator.stop();
-    return { ok: true, status: row.status };
-  }
-
-  @Post("withdraw")
-  async withdraw(@Body() body: { accountIndex?: number; amountXlm?: number }) {
-    const account = await this.accounts.getByIndex(body.accountIndex ?? 0);
-    const amount = xlmToStroops(body.amountXlm ?? 1);
-    const txId = await this.operations.withdraw(account, amount);
-    return { ok: true, txId };
   }
 }
